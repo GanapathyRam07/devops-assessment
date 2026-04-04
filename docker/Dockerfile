@@ -1,6 +1,6 @@
 # STAGE 1: Builder
 
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -12,7 +12,7 @@ RUN npm test
 # STAGE 2: Production
 # Minimal image with only production dependencies
 
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
 
