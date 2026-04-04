@@ -1,28 +1,19 @@
 version: 0.2
 
-env:
-  variables:
-    AWS_DEFAULT_REGION: "ap-south-1"
-    IMAGE_TAG: "latest"
-  parameter-store:
-    ECR_REPO_URI: "/devops-assessment/ecr-repo-uri"
-
 phases:
   install:
     runtime-versions:
       nodejs: 18
     commands:
       - echo "=== Installing dependencies ==="
-      - cd app
-      - npm install
-      - echo "=== Installing Trivy for security scan ==="
-      - rpm -ivh https://github.com/aquasecurity/trivy/releases/download/v0.48.0/trivy_0.48.0_Linux-64bit.rpm
+      - cd app && npm install && cd ..
+      - echo "=== Installing Trivy ==="
+      - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
   pre_build:
     commands:
       - echo "=== Running Tests ==="
-      - cd app
-      - npm test
+      - cd app && npm test && cd ..
       - echo "=== Logging into ECR ==="
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPO_URI
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
@@ -41,14 +32,12 @@ phases:
       - echo "=== Pushing Image to ECR ==="
       - docker push $ECR_REPO_URI:$IMAGE_TAG
       - docker push $ECR_REPO_URI:latest
-      - echo "=== Writing image definitions ==="
+      - echo "=== Build Complete ==="
       - printf '[{"name":"app","imageUri":"%s"}]' $ECR_REPO_URI:$IMAGE_TAG > imagedefinitions.json
-      - cat imagedefinitions.json
 
 artifacts:
   files:
     - imagedefinitions.json
-    - appspec.yml
   discard-paths: yes
 
 reports:
