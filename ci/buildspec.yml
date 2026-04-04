@@ -40,8 +40,3 @@ artifacts:
     - imagedefinitions.json
   discard-paths: yes
 
-reports:
-  jest-reports:
-    files:
-      - "app/coverage/clover.xml"
-    file-format: CLOVERXML
