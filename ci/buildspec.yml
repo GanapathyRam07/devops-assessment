@@ -28,7 +28,7 @@ phases:
   post_build:
     commands:
       - echo "=== Running Security Scan ==="
-      - trivy image --exit-code 0 --severity HIGH,CRITICAL $ECR_REPO_URI:$IMAGE_TAG
+      - trivy image --exit-code 1 --severity HIGH,CRITICAL $ECR_REPO_URI:$IMAGE_TAG
       - echo "=== Pushing Image to ECR ==="
       - docker push $ECR_REPO_URI:$IMAGE_TAG
       - docker push $ECR_REPO_URI:latest
