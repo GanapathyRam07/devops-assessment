@@ -9,9 +9,9 @@ provisioning on AWS using Infrastructure as Code.
 
 ## Architecture Diagram
 
-Developer (Local)
+Developer (Local Machine)
 |
-| git push
+| git push origin main
 ↓
 GitHub Repository (main branch)
 |
@@ -19,38 +19,52 @@ GitHub Repository (main branch)
 ↓
 AWS CodePipeline
 |
+| downloads source code
 ↓
-┌─────────────────────────────────┐
-│         AWS CodeBuild           │
-│                                 │
-│  1. Install Node.js deps        │
-│  2. Run Jest unit tests         │
-│  3. Build Docker image          │
-│  4. Trivy security scan         │
-│  5. Push image to ECR           │
-│  6. Deploy to EC2 via SSM       │
-└─────────────────────────────────┘
+AWS S3 Bucket (Artifact Store)
+├── source_output/  ← GitHub source code (ZIP)
+└── build_output/   ← imagedefinitions.json
+|
+| CodeBuild picks up source
+↓
+┌─────────────────────────────────────┐
+│           AWS CodeBuild             │
+│                                     │
+│  Step 1: Install Node.js 20 + npm   │
+│  Step 2: Run Jest unit tests        │
+│  Step 3: Build multi-stage Docker   │
+│  Step 4: Tag with git commit hash   │
+│  Step 5: Trivy security scan        │
+│  Step 6: Push image to ECR          │
+│  Step 7: Deploy to EC2 via SSM      │
+└─────────────────────────────────────┘
+|
+| docker push
+↓
+AWS ECR (Elastic Container Registry)
+└── devops-assessment-app:abc1234
+|
+| SSM send-command
+↓
+┌─────────────────────────────────────┐
+│              AWS VPC                │
+│         (10.0.0.0/16)               │
+│                                     │
+│  ┌───────────────────────────────┐  │
+│  │   Public Subnet 10.0.1.0/24   │  │
+│  │                               │  │
+│  │   EC2 t2.micro                │  │
+│  │   └── Docker Container        │  │
+│  │       └── Node.js App         │  │
+│  │           Port: 3000          │  │
+│  └───────────────────────────────┘  │
+│                                     │
+│  Internet Gateway | Route Tables    │
+│  Security Groups (22, 80, 3000)     │
+└─────────────────────────────────────┘
 |
 ↓
-AWS ECR (Docker Image Registry)
-|
-↓
-┌─────────────────────────────────┐
-│         AWS VPC                 │
-│                                 │
-│  ┌──────────────────────────┐   │
-│  │   Public Subnet          │   │
-│  │                          │   │
-│  │   EC2 t2.micro           │   │
-│  │   └── Docker Container   │   │
-│  │       └── Node.js App    │   │
-│  │           Port: 3000     │   │
-│  └──────────────────────────┘   │
-│                                 │
-│  Internet Gateway               │
-│  Route Tables                   │
-│  Security Groups                │
-└─────────────────────────────────┘
+End User → http://EC2_IP:3000
 
 ---
 
