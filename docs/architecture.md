@@ -9,8 +9,6 @@ provisioning on AWS using Infrastructure as Code.
 
 ## Architecture Diagram
 
-## Architecture Diagram
-
 ```text
 Developer (Local)
    |
