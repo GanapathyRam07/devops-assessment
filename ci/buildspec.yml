@@ -3,8 +3,18 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18
+      nodejs: 20
     commands:
+      - echo "=== Checking changed files ==="
+      - |
+        CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "app/")
+        echo "Changed files: $CHANGED"
+        if echo "$CHANGED" | grep -qE '^(app|ci|docker|terraform)/'; then
+          echo "Relevant changes detected - proceeding with build"
+        else
+          echo "No relevant changes - skipping build"
+          exit 0
+        fi
       - echo "=== Installing dependencies ==="
       - cd app && npm install && cd ..
       - echo "=== Installing Trivy ==="
